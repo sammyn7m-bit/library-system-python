@@ -21,3 +21,14 @@ A small object-oriented library system in Python (standard library only).
     library_system/   models, library, book_importer, storage, cli
     data/             books.csv (catalog), books_messy.csv (importer test)
     tests/            pytest suite
+
+
+## Roadmap
+- [x] Book, Member and Library classes
+- [x] Custom exceptions
+- [x] CSV catalog import with row validation
+- [x] Tests (pytest) and type checking (mypy)
+- [ ] JSON save/load
+- [ ] Interactive menu (CLI)
+- [ ] Overdue tracking and fines
+- [ ] Search by title

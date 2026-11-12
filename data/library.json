@@ -1,0 +1,21 @@
+{
+    "version": 1,
+    "books": [
+        {
+            "title": "Python Basics",
+            "isbn": "111",
+            "is_available": true
+        },
+        {
+            "title": "Clean Code",
+            "isbn": "222",
+            "is_available": true
+        },
+        {
+            "title": "Fluent Python",
+            "isbn": "333",
+            "is_available": true
+        }
+    ],
+    "members": []
+}

@@ -3,24 +3,47 @@ from pathlib import Path
 from library_system.book_importer import import_books
 from library_system.library import Library
 
-DATA = Path(__file__).resolve().parent.parent / "data"
+
+def write_csv(tmp_path: Path, text: str) -> Path:
+    path = tmp_path / "books.csv"
+    path.write_text(text, encoding="utf-8")
+    return path
 
 
-def test_clean_import() -> None:
-    lib = Library()
-    added, problems = import_books(lib, DATA / "books.csv")
-    assert added == 3
+def test_clean_rows(tmp_path: Path) -> None:
+    path = write_csv(tmp_path, "title,isbn\nA,1\nB,2\n")
+    added, problems = import_books(Library(), path)
+    assert added == 2
     assert problems == []
 
 
-def test_messy_import_reports_bad_rows() -> None:
-    lib = Library()
-    added, problems = import_books(lib, DATA / "books_messy.csv", replace=True)
-    assert added == 2
+def test_bad_rows_are_reported_with_line_numbers(tmp_path: Path) -> None:
+    path = write_csv(
+        tmp_path,
+        "title,isbn\n"
+        "A,1\n"
+        "\n"
+        "title,isbn\n"
+        "No Isbn,\n"
+        ",3\n"
+        "A again,1\n",
+    )
+    added, problems = import_books(Library(), path)
+    assert added == 1
     assert len(problems) == 3
+    assert problems[0].startswith("line 5")
+    assert problems[1].startswith("line 6")
+    assert problems[2].startswith("line 7")
 
 
-def test_missing_file() -> None:
-    added, problems = import_books(Library(), DATA / "nope.csv")
+def test_replace_swaps_the_catalog(tmp_path: Path) -> None:
+    lib = Library()
+    import_books(lib, write_csv(tmp_path, "title,isbn\nOld,1\n"))
+    import_books(lib, write_csv(tmp_path, "title,isbn\nNew,2\n"), replace=True)
+    assert set(lib.books) == {"2"}
+
+
+def test_missing_file(tmp_path: Path) -> None:
+    added, problems = import_books(Library(), tmp_path / "nope.csv")
     assert added == 0
     assert "not found" in problems[0]

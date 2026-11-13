@@ -8,7 +8,6 @@ from typing import Any
 from .library import Library
 from .models import Book, Member
 
-
 DEFAULT_STORAGE_PATH = (
     Path(__file__).resolve().parent.parent / "data" / "library.json"
 )

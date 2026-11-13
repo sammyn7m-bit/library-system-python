@@ -3,10 +3,10 @@ import pytest
 from library_system.library import Library
 from library_system.models import (
     Book,
-    Member,
     BookUnavailableError,
     BorrowLimitError,
     DuplicateBookError,
+    Member,
     MemberNotFoundError,
     NotBorrowedError,
 )
@@ -60,3 +60,15 @@ def test_return_restores_availability(lib: Library) -> None:
 def test_return_not_borrowed(lib: Library) -> None:
     with pytest.raises(NotBorrowedError):
         lib.return_book("M1", "1")
+
+def test_search_by_title(lib: Library) -> None:
+    assert lib.search_books("a") == [lib.books["1"]]
+
+
+def test_search_by_isbn(lib: Library) -> None:
+    assert lib.search_books("2") == [lib.books["2"]]
+
+
+def test_search_no_match_and_empty(lib: Library) -> None:
+    assert lib.search_books("zzz") == []
+    assert lib.search_books("   ") == []

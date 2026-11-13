@@ -1,11 +1,11 @@
 from .models import (
     Book,
-    Member,
     BookNotFoundError,
     BookUnavailableError,
     BorrowLimitError,
-    MemberNotFoundError,
     DuplicateBookError,
+    Member,
+    MemberNotFoundError,
     NotBorrowedError,
 )
 
@@ -15,14 +15,17 @@ class Library:
         self.books: dict[str, Book] = {}
         self.members: dict[str, Member] = {}
 
+    # add book to the library
     def add_book(self, book: Book) -> None:
         if book.isbn in self.books:
             raise DuplicateBookError(f"Book with ISBN {book.isbn} already exists.")
         self.books[book.isbn] = book
 
+    # add a member
     def add_member(self, member: Member) -> None:
         self.members[member.member_id] = member
 
+    # fuction for borrowing a book
     def borrow_book(self, member_id: str, isbn: str) -> None:
         member = self.members.get(member_id)
         if member is None:
@@ -58,5 +61,19 @@ class Library:
         member.borrowed_books.remove(book)
         book.is_available = True
 
+
+    # check availability of a book
     def available_books(self) -> list[Book]:
         return [book for book in self.books.values() if book.is_available]
+
+    # search for books in the library
+    def search_books(self, query: str) -> list[Book]:
+        """Return books whose title or ISBN contains the query (case-insensitive)."""
+        query = query.strip().lower()
+        if not query:
+            return []
+        return [
+            book
+            for book in self.books.values()
+            if query in book.title.lower() or query in book.isbn.lower()
+        ]

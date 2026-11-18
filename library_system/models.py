@@ -1,26 +1,33 @@
-class BookNotFoundError(Exception):
+class LibraryError(Exception):
+    """Base class for all library errors."""
+
+
+class BookNotFoundError(LibraryError):
     """Raised when a book is not in the library."""
 
 
-class BookUnavailableError(Exception):
+class BookUnavailableError(LibraryError):
     """Raised when a book is already borrowed."""
 
 
-class BorrowLimitError(Exception):
+class BorrowLimitError(LibraryError):
     """Raised when a member has reached the borrow limit."""
 
 
-class MemberNotFoundError(Exception):
+class MemberNotFoundError(LibraryError):
     """Raised when a member id is not registered."""
 
 
-class DuplicateBookError(Exception):
+class DuplicateBookError(LibraryError):
     """Raised when a book with the same ISBN already exists."""
 
 
-class NotBorrowedError(Exception):
-    """Raised when a member returns a book they did not borrow."""
+class DuplicateMemberError(LibraryError):
+    """Raised when a member with the same ID already exists."""
 
+
+class NotBorrowedError(LibraryError):
+    """Raised when a member returns a book they did not borrow."""
 
 class Book:
     def __init__(self, title: str, isbn: str) -> None:

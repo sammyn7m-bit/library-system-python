@@ -29,6 +29,6 @@ A small object-oriented library system in Python (standard library only).
 - [x] CSV catalog import with row validation
 - [x] Tests (pytest) and type checking (mypy)
 - [ ] JSON save/load
-- [ ] Interactive menu (CLI)
+- [x] Interactive menu (CLI)
 - [ ] Overdue tracking and fines
 - [x] Search by title

@@ -4,6 +4,7 @@ from .models import (
     BookUnavailableError,
     BorrowLimitError,
     DuplicateBookError,
+    DuplicateMemberError,
     Member,
     MemberNotFoundError,
     NotBorrowedError,
@@ -23,6 +24,8 @@ class Library:
 
     # add a member
     def add_member(self, member: Member) -> None:
+        if member.member_id in self.members:
+            raise DuplicateMemberError(f"Member {member.member_id} already exists.")
         self.members[member.member_id] = member
 
     # fuction for borrowing a book

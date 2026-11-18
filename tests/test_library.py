@@ -6,6 +6,7 @@ from library_system.models import (
     BookUnavailableError,
     BorrowLimitError,
     DuplicateBookError,
+    DuplicateMemberError,
     Member,
     MemberNotFoundError,
     NotBorrowedError,
@@ -36,6 +37,11 @@ def test_cannot_borrow_twice(lib: Library) -> None:
 def test_unknown_member(lib: Library) -> None:
     with pytest.raises(MemberNotFoundError):
         lib.borrow_book("X", "1")
+
+
+def test_duplicate_member(lib: Library) -> None:
+    with pytest.raises(DuplicateMemberError):
+        lib.add_member(Member("sam again", "M1"))
 
 
 def test_duplicate_book(lib: Library) -> None:

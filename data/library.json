@@ -17,5 +17,11 @@
             "is_available": true
         }
     ],
-    "members": []
+    "members": [
+        {
+            "name": "sn",
+            "member_id": "12",
+            "borrowed_isbns": []
+        }
+    ]
 }

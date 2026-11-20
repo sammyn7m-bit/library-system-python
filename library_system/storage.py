@@ -16,7 +16,7 @@ DEFAULT_STORAGE_PATH = (
 class StorageError(Exception):
     """Raised when library data cannot be loaded or validated."""
 
-
+# save books to library
 def save_library(
     library: Library,
     path: Path = DEFAULT_STORAGE_PATH,
@@ -30,6 +30,7 @@ def save_library(
             "title": book.title,
             "isbn": book.isbn,
             "is_available": book.is_available,
+            "author": book.author,
         })
 
     members = []
@@ -67,6 +68,7 @@ def save_library(
         raise
 
 
+# load items from library
 def load_library(
     path: Path = DEFAULT_STORAGE_PATH,
 ) -> Library:
@@ -109,18 +111,20 @@ def load_library(
         title = item.get("title")
         isbn = item.get("isbn")
         is_available = item.get("is_available")
+        author = item.get("author", "")
 
         if (
             not isinstance(title, str)
             or not isinstance(isbn, str)
             or not isinstance(is_available, bool)
+            or not isinstance(author, str)
         ):
             raise StorageError("Invalid book fields.")
 
         if isbn in library.books:
             raise StorageError(f"Duplicate ISBN: {isbn}")
 
-        book = Book(title, isbn)
+        book = Book(title, isbn, author)
         book.is_available = is_available
 
         library.books[isbn] = book

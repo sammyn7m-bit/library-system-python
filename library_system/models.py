@@ -30,14 +30,16 @@ class NotBorrowedError(LibraryError):
     """Raised when a member returns a book they did not borrow."""
 
 class Book:
-    def __init__(self, title: str, isbn: str) -> None:
+    def __init__(self, title: str, isbn: str, author: str = "") -> None:
         self.title: str = title
         self.isbn: str = isbn
+        self.author: str = author
         self.is_available: bool = True
 
     def __str__(self) -> str:
         status = "Available" if self.is_available else "Borrowed"
-        return f"{self.title} ({self.isbn}) - {status}"
+        by = f" by {self.author}" if self.author else ""
+        return f"{self.title}{by} ({self.isbn}) - {status}"
 
     def __repr__(self) -> str:
         return f"Book(title={self.title!r}, isbn={self.isbn!r})"

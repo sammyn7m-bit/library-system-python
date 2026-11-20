@@ -22,18 +22,21 @@ def lib() -> Library:
     return library
 
 
+# test availabilitt of a book
 def test_borrow_marks_book_unavailable(lib: Library) -> None:
     lib.borrow_book("M1", "1")
     assert not lib.books["1"].is_available
     assert len(lib.members["M1"].borrowed_books) == 1
 
 
+# cannot borrow book twice
 def test_cannot_borrow_twice(lib: Library) -> None:
     lib.borrow_book("M1", "1")
     with pytest.raises(BookUnavailableError):
         lib.borrow_book("M1", "1")
 
 
+# test with an unknown member
 def test_unknown_member(lib: Library) -> None:
     with pytest.raises(MemberNotFoundError):
         lib.borrow_book("X", "1")
@@ -67,14 +70,23 @@ def test_return_not_borrowed(lib: Library) -> None:
     with pytest.raises(NotBorrowedError):
         lib.return_book("M1", "1")
 
+# search by title
 def test_search_by_title(lib: Library) -> None:
     assert lib.search_books("a") == [lib.books["1"]]
 
 
+# search by isbn
 def test_search_by_isbn(lib: Library) -> None:
     assert lib.search_books("2") == [lib.books["2"]]
 
 
+# search by empty
 def test_search_no_match_and_empty(lib: Library) -> None:
     assert lib.search_books("zzz") == []
     assert lib.search_books("   ") == []
+
+# search by author
+def test_search_by_author() -> None:
+    library = Library()
+    library.add_book(Book("Clean Code", "222", "Robert C. Martin"))
+    assert library.search_books("martin") == [library.books["222"]]

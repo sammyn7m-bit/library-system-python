@@ -78,5 +78,7 @@ class Library:
         return [
             book
             for book in self.books.values()
-            if query in book.title.lower() or query in book.isbn.lower()
+            if query in book.title.lower()
+            or query in book.isbn.lower()
+            or query in book.author.lower()
         ]

@@ -1,4 +1,4 @@
-title,isbn
-Python Basics,111
-Clean Code,222
-Fluent Python,333
+title,isbn,author
+Python Basics,111,Jane Doe
+Clean Code,222,Robert C. Martin
+Fluent Python,333,Luciano Ramalho

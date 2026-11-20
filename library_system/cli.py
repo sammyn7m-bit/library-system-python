@@ -43,6 +43,7 @@ def ask(prompt: str) -> str:
     return input(prompt).strip()
 
 
+# hamdle book borrowing
 def handle_borrow(lib: Library) -> None:
     member_id = ask("Member ID: ")
     isbn = ask("Book ISBN: ")
@@ -51,6 +52,7 @@ def handle_borrow(lib: Library) -> None:
     print(f"Borrowed: {lib.books[isbn].title}")
 
 
+# handle books found
 def handle_return(lib: Library) -> None:
     member_id = ask("Member ID: ")
     isbn = ask("Book ISBN: ")
@@ -59,14 +61,16 @@ def handle_return(lib: Library) -> None:
     print(f"Returned: {lib.books[isbn].title}")
 
 
+# searxh results
 def handle_search(lib: Library) -> None:
-    results = lib.search_books(ask("Search by title or ISBN: "))
+    results = lib.search_books(ask("Search by title, author or ISBN: "))
     if not results:
         print("No books found.")
     for book in results:
         print(book)
 
 
+# check if book is available
 def handle_list_available(lib: Library) -> None:
     books = lib.available_books()
     if not books:
@@ -75,6 +79,7 @@ def handle_list_available(lib: Library) -> None:
         print(book)
 
 
+# add member
 def handle_add_member(lib: Library) -> None:
     name = ask("Member name: ")
     member_id = ask("Member ID: ")

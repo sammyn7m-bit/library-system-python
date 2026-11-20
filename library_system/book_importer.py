@@ -30,6 +30,8 @@ def import_books(
                 line_no = reader.line_num
                 title = (row.get("title") or "").strip()
                 isbn = (row.get("isbn") or "").strip()
+                author = (row.get("author") or "").strip()
+
 
                 if not title and not isbn:
                     continue
@@ -43,7 +45,7 @@ def import_books(
                     continue
 
                 seen.add(isbn)
-                parsed.append((line_no, Book(title, isbn)))
+                parsed.append((line_no, Book(title, isbn, author)))
 
     except FileNotFoundError:
         return 0, [f"{csv_path} not found"]

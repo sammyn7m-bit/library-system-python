@@ -10,6 +10,7 @@ from library_system.storage import (
 )
 
 
+# save/load library
 def test_save_and_load_library(tmp_path):
     path = tmp_path / "library.json"
 
@@ -43,6 +44,7 @@ def test_save_and_load_library(tmp_path):
     )
 
 
+# missing file
 def test_load_missing_file_raises_error(tmp_path):
     path = tmp_path / "missing.json"
 
@@ -50,6 +52,7 @@ def test_load_missing_file_raises_error(tmp_path):
         load_library(path)
 
 
+# 8nvalid json
 def test_load_invalid_json_raises_storage_error(tmp_path):
     path = tmp_path / "library.json"
     path.write_text("{invalid json", encoding="utf-8")
@@ -69,3 +72,10 @@ def test_empty_library_can_be_saved_and_loaded(tmp_path):
     assert loaded.books == {}
     assert loaded.members == {}
 
+# test author
+def test_author_round_trip(tmp_path: Path) -> None:
+    library = Library()
+    library.add_book(Book("A", "1", "Ann"))
+    path = tmp_path / "lib.json"
+    save_library(library, path)
+    assert load_library(path).books["1"].author == "Ann"

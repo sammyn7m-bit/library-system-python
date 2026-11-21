@@ -8,6 +8,12 @@ A small object-oriented library system in Python (standard library only).
 - CSV catalog import that reports bad rows instead of crashing
 - Type hints throughout, checked with mypy; tests with pytest
 
+## Fees
+- Loans last 14 days.
+- Late returns cost 0.50 per full day late, capped at 20.00.
+- Returning on the due date is not late.
+- Money is stored as integer cents to avoid rounding errors.
+
 ## Run
     python -m venv .venv && source .venv/bin/activate
     pip install -r requirements-dev.txt
@@ -28,7 +34,7 @@ A small object-oriented library system in Python (standard library only).
 - [x] Custom exceptions
 - [x] CSV catalog import with row validation
 - [x] Tests (pytest) and type checking (mypy)
-- [ ] JSON save/load
+- [x] JSON save/load
 - [x] Interactive menu (CLI)
-- [ ] Overdue tracking and fines
+- [x] Overdue tracking and fines
 - [x] Search by title

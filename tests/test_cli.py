@@ -1,3 +1,7 @@
+from datetime import date
+
+from library_system.models import Book
+
 from pathlib import Path
 
 import pytest
@@ -34,6 +38,7 @@ def test_restart_keeps_borrowed_state(tmp_path: Path) -> None:
     assert not again.books["1"].is_available
 
 
+# test search
 def test_handle_search(monkeypatch: pytest.MonkeyPatch,
                        capsys: pytest.CaptureFixture[str]) -> None:
     lib = Library()
@@ -44,3 +49,23 @@ def test_handle_search(monkeypatch: pytest.MonkeyPatch,
     cli.handle_search(lib)
 
     assert "Clean Code" in capsys.readouterr().out
+
+def test_handle_overdue_lists_late_loans(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    lib = Library()
+    lib.add_book(Book("Clean Code", "222"))
+    lib.add_member(Member("sam", "M1"))
+    lib.borrow_book("M1", "222", today=date(2026, 1, 1))  # due 2026-01-15
+
+    cli.handle_overdue(lib, today=date(2026, 1, 18))
+
+    out = capsys.readouterr().out
+    assert "Clean Code" in out
+    assert "3 days late" in out
+    assert "1.50" in out
+
+# test overdue
+def test_handle_overdue_when_none(capsys: pytest.CaptureFixture[str]) -> None:
+    cli.handle_overdue(Library(), today=date(2026, 1, 1))
+    assert "No overdue books." in capsys.readouterr().out

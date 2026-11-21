@@ -1,9 +1,12 @@
+from datetime import date
 from pathlib import Path
-from .loans import format_money
+
 from .book_importer import import_books
 from .library import Library
+from .loans import days_late, fine_for, format_money
 from .models import LibraryError, Member
 from .storage import DEFAULT_STORAGE_PATH, StorageError, load_library, save_library
+
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 CATALOG_PATH = DATA_DIR / "books.csv"
@@ -14,7 +17,8 @@ MENU = """
 3. Search books
 4. List available books
 5. Add member
-6. Quit"""
+6. Overdue books
+7. Quit"""
 
 
 def start_library(
@@ -92,6 +96,28 @@ def handle_add_member(lib: Library) -> None:
     print(f"Added member {name} ({member_id})")
 
 
+def handle_overdue(lib: Library, today: date | None = None) -> None:
+    """List every overdue loan with the member, days late and current fine."""
+    # today is a parameter so tests can use a fixed date
+    today = today or date.today()
+
+    overdue = lib.overdue_loans(today)
+    if not overdue:
+        print("No overdue books.")
+        return
+
+    for loan in overdue:
+        book = lib.books[loan.isbn]
+        member = lib.members[loan.member_id]
+        late = days_late(loan, today)
+        fine = fine_for(loan, today)
+        print(
+            f"{book.title} | {member.name} ({loan.member_id}) | "
+            f"due {loan.due_on} | {late} days late | fine {format_money(fine)}"
+        )
+
+
+
 def main() -> None:
     try:
         lib = start_library()
@@ -104,12 +130,13 @@ def main() -> None:
         "3": handle_search,
         "4": handle_list_available,
         "5": handle_add_member,
+        "6": handle_overdue,
     }
 
     while True:
         print(MENU)
         choice = ask("Choose: ")
-        if choice == "6":
+        if choice == "7":
             break
         handler = handlers.get(choice)
         if handler is None:

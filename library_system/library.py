@@ -1,3 +1,7 @@
+from datetime import date
+
+from .loans import Loan, fine_for
+
 from .models import (
     Book,
     BookNotFoundError,
@@ -15,6 +19,7 @@ class Library:
     def __init__(self) -> None:
         self.books: dict[str, Book] = {}
         self.members: dict[str, Member] = {}
+        self.loans: list[Loan] = []
 
     # add book to the library
     def add_book(self, book: Book) -> None:
@@ -29,7 +34,9 @@ class Library:
         self.members[member.member_id] = member
 
     # fuction for borrowing a book
-    def borrow_book(self, member_id: str, isbn: str) -> None:
+    def borrow_book(
+        self, member_id: str, isbn: str, today: date | None = None
+    ) -> None:
         member = self.members.get(member_id)
         if member is None:
             raise MemberNotFoundError(f"Member {member_id} does not exist.")
@@ -48,8 +55,13 @@ class Library:
 
         book.is_available = False
         member.borrowed_books.append(book)
+        self.loans.append(Loan.start(isbn, member_id, today or date.today()))
 
-    def return_book(self, member_id: str, isbn: str) -> None:
+    # book return
+    def return_book(
+        self, member_id: str, isbn: str, today: date | None = None
+    ) -> int:
+        """Return a book. Gives back the fine in cents (0 if on time)."""
         member = self.members.get(member_id)
         if member is None:
             raise MemberNotFoundError(f"Member {member_id} does not exist.")
@@ -61,9 +73,36 @@ class Library:
         if book not in member.borrowed_books:
             raise NotBorrowedError(f"{member.name} has not borrowed '{book.title}'.")
 
+        today = today or date.today()
+        fine = 0
+        loan = self._open_loan(member_id, isbn)
+        if loan is not None:  # None for loans made before loans were saved
+            loan.returned_on = today
+            fine = fine_for(loan, today)
+
         member.borrowed_books.remove(book)
         book.is_available = True
+        return fine
 
+ 
+    def _open_loan(self, member_id: str, isbn: str) -> Loan | None:
+        for loan in self.loans:
+            if (
+                loan.isbn == isbn
+                and loan.member_id == member_id
+                and not loan.is_returned
+            ):
+                return loan
+        return None
+
+     # loan overdue
+    def overdue_loans(self, today: date | None = None) -> list[Loan]:
+        today = today or date.today()
+        return [
+            loan
+            for loan in self.loans
+            if not loan.is_returned and loan.due_on < today
+        ]
 
     # check availability of a book
     def available_books(self) -> list[Book]:

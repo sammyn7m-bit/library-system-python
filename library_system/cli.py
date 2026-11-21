@@ -1,5 +1,5 @@
 from pathlib import Path
-
+from .loans import format_money
 from .book_importer import import_books
 from .library import Library
 from .models import LibraryError, Member
@@ -56,10 +56,11 @@ def handle_borrow(lib: Library) -> None:
 def handle_return(lib: Library) -> None:
     member_id = ask("Member ID: ")
     isbn = ask("Book ISBN: ")
-    lib.return_book(member_id, isbn)
+    fine = lib.return_book(member_id, isbn)
     save_library(lib)
     print(f"Returned: {lib.books[isbn].title}")
-
+    if fine:
+        print(f"Late fee: {format_money(fine)}")
 
 # searxh results
 def handle_search(lib: Library) -> None:

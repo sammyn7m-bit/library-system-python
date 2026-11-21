@@ -1,5 +1,6 @@
 import pytest
 
+from datetime import date
 from library_system.library import Library
 from library_system.models import (
     Book,
@@ -90,3 +91,36 @@ def test_search_by_author() -> None:
     library = Library()
     library.add_book(Book("Clean Code", "222", "Robert C. Martin"))
     assert library.search_books("martin") == [library.books["222"]]
+
+
+def test_borrow_creates_loan(lib: Library) -> None:
+    lib.borrow_book("M1", "1", today=date(2026, 1, 1))
+    assert lib.loans[0].due_on == date(2026, 1, 15)
+
+
+def test_return_on_time_has_no_fine(lib: Library) -> None:
+    lib.borrow_book("M1", "1", today=date(2026, 1, 1))
+    assert lib.return_book("M1", "1", today=date(2026, 1, 15)) == 0
+
+
+def test_return_late_gives_fine(lib: Library) -> None:
+    lib.borrow_book("M1", "1", today=date(2026, 1, 1))
+    assert lib.return_book("M1", "1", today=date(2026, 1, 18)) == 150
+
+
+def test_return_closes_loan(lib: Library) -> None:
+    lib.borrow_book("M1", "1", today=date(2026, 1, 1))
+    lib.return_book("M1", "1", today=date(2026, 1, 5))
+    assert lib.loans[0].returned_on == date(2026, 1, 5)
+
+
+def test_overdue_loans(lib: Library) -> None:
+    lib.borrow_book("M1", "1", today=date(2026, 1, 1))
+    assert lib.overdue_loans(date(2026, 1, 15)) == []
+    assert len(lib.overdue_loans(date(2026, 1, 16))) == 1
+
+
+def test_return_without_loan_record_has_no_fine(lib: Library) -> None:
+    lib.borrow_book("M1", "1", today=date(2026, 1, 1))
+    lib.loans.clear()  # as after loading a file saved before loans existed
+    assert lib.return_book("M1", "1", today=date(2026, 3, 1)) == 0

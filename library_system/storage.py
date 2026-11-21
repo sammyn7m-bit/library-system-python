@@ -1,27 +1,32 @@
-
 """JSON persistence for the library."""
 
 import json
+from datetime import date
 from pathlib import Path
 from typing import Any
 
 from .library import Library
+from .loans import Loan
 from .models import Book, Member
 
 DEFAULT_STORAGE_PATH = (
     Path(__file__).resolve().parent.parent / "data" / "library.json"
 )
 
+CURRENT_VERSION = 2
+SUPPORTED_VERSIONS = {1, 2}
+
 
 class StorageError(Exception):
     """Raised when library data cannot be loaded or validated."""
 
-# save books to library
+
+# save the library to a JSON file
 def save_library(
     library: Library,
     path: Path = DEFAULT_STORAGE_PATH,
 ) -> None:
-    """Save books and members to a JSON file."""
+    """Save books, members and loans to a JSON file."""
 
     books = []
 
@@ -46,10 +51,24 @@ def save_library(
             "borrowed_isbns": borrowed_isbns,
         })
 
+    loans = [
+        {
+            "isbn": loan.isbn,
+            "member_id": loan.member_id,
+            "borrowed_on": loan.borrowed_on.isoformat(),
+            "due_on": loan.due_on.isoformat(),
+            "returned_on": (
+                loan.returned_on.isoformat() if loan.returned_on else None
+            ),
+        }
+        for loan in library.loans
+    ]
+
     data = {
-        "version": 1,
+        "version": CURRENT_VERSION,
         "books": books,
         "members": members,
+        "loans": loans,
     }
 
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -68,11 +87,11 @@ def save_library(
         raise
 
 
-# load items from library
+# load the library from a JSON file
 def load_library(
     path: Path = DEFAULT_STORAGE_PATH,
 ) -> Library:
-    """Load library data and rebuild its Book and Member objects."""
+    """Load library data and rebuild its Book, Member and Loan objects."""
 
     try:
         with path.open("r", encoding="utf-8") as file:
@@ -89,7 +108,8 @@ def load_library(
     if not isinstance(data, dict):
         raise StorageError("Library data must be a JSON object.")
 
-    if data.get("version") != 1:
+    version = data.get("version")
+    if version not in SUPPORTED_VERSIONS:
         raise StorageError("Unsupported or missing storage version.")
 
     books_data = data.get("books")
@@ -183,5 +203,73 @@ def load_library(
                 f"Inconsistent availability for book {isbn}."
             )
 
+    if version == 1:
+        # old files have no loan dates: start each open loan today
+        today = date.today()
+        for isbn, member_id in borrowed_by.items():
+            library.loans.append(Loan.start(isbn, member_id, today))
+    else:
+        library.loans = _parse_loans(data.get("loans"), library, borrowed_by)
+
     return library
 
+
+def _parse_date(value: Any, field: str) -> date:
+    if not isinstance(value, str):
+        raise StorageError(f"Loan field '{field}' must be a date string.")
+    try:
+        return date.fromisoformat(value)
+    except ValueError as error:
+        raise StorageError(f"Invalid date in '{field}': {value}") from error
+
+
+def _parse_loans(
+    loans_data: Any, library: Library, borrowed_by: dict[str, str]
+) -> list[Loan]:
+    if not isinstance(loans_data, list):
+        raise StorageError("'loans' must be a list.")
+
+    loans: list[Loan] = []
+    open_isbns: set[str] = set()
+
+    for item in loans_data:
+        if not isinstance(item, dict):
+            raise StorageError("Invalid loan record.")
+
+        isbn = item.get("isbn")
+        member_id = item.get("member_id")
+        if not isinstance(isbn, str) or not isinstance(member_id, str):
+            raise StorageError("Invalid loan fields.")
+        if isbn not in library.books or member_id not in library.members:
+            raise StorageError(
+                f"Loan references unknown book {isbn} or member {member_id}."
+            )
+
+        borrowed_on = _parse_date(item.get("borrowed_on"), "borrowed_on")
+        due_on = _parse_date(item.get("due_on"), "due_on")
+        returned_raw = item.get("returned_on")
+        returned_on = (
+            None if returned_raw is None
+            else _parse_date(returned_raw, "returned_on")
+        )
+
+        if due_on < borrowed_on or (
+            returned_on is not None and returned_on < borrowed_on
+        ):
+            raise StorageError(f"Loan for book {isbn} has inconsistent dates.")
+
+        if returned_on is None:
+            if isbn in open_isbns:
+                raise StorageError(f"Book {isbn} has more than one open loan.")
+            if borrowed_by.get(isbn) != member_id:
+                raise StorageError(
+                    f"Open loan for {isbn} does not match its borrower."
+                )
+            open_isbns.add(isbn)
+
+        loans.append(Loan(isbn, member_id, borrowed_on, due_on, returned_on))
+
+    if open_isbns != set(borrowed_by):
+        raise StorageError("Open loans do not match borrowed books.")
+
+    return loans

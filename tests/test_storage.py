@@ -1,3 +1,5 @@
+import json
+from datetime import date
 
 import pytest
 
@@ -79,3 +81,64 @@ def test_author_round_trip(tmp_path: Path) -> None:
     path = tmp_path / "lib.json"
     save_library(library, path)
     assert load_library(path).books["1"].author == "Ann"
+
+
+# test loans
+def test_loans_round_trip(tmp_path: Path) -> None:
+    library = Library()
+    library.add_book(Book("A", "1"))
+    library.add_member(Member("sam", "M1"))
+    library.borrow_book("M1", "1", today=date(2026, 1, 1))
+    library.return_book("M1", "1", today=date(2026, 1, 20))
+    library.borrow_book("M1", "1", today=date(2026, 2, 1))
+
+    path = tmp_path / "lib.json"
+    save_library(library, path)
+
+    assert load_library(path).loans == library.loans
+
+
+def test_version_1_file_is_migrated(tmp_path: Path) -> None:
+    path = tmp_path / "old.json"
+    path.write_text(json.dumps({
+        "version": 1,
+        "books": [{"title": "A", "isbn": "1", "is_available": False}],
+        "members": [{"name": "sam", "member_id": "M1", "borrowed_isbns": ["1"]}],
+    }))
+
+    loaded = load_library(path)
+
+    assert len(loaded.loans) == 1
+    assert loaded.loans[0].isbn == "1"
+    assert loaded.loans[0].returned_on is None
+
+
+# test invalid date
+def test_invalid_loan_date(lib: Library, tmp_path: Path) -> None:
+    path = tmp_path / "lib.json"
+    save_library(lib, path)
+    data = json.loads(path.read_text())
+    data["loans"][0]["due_on"] = "not-a-date"
+    path.write_text(json.dumps(data))
+    with pytest.raises(StorageError):
+        load_library(path)
+
+
+def test_open_loan_missing(lib: Library, tmp_path: Path) -> None:
+    path = tmp_path / "lib.json"
+    save_library(lib, path)
+    data = json.loads(path.read_text())
+    data["loans"] = []
+    path.write_text(json.dumps(data))
+    with pytest.raises(StorageError):
+        load_library(path)
+
+
+@pytest.fixture
+def lib() -> Library:
+    library = Library()
+    library.add_book(Book("A", "1"))
+    library.add_book(Book("B", "2"))
+    library.add_member(Member("sam", "M1"))
+    library.borrow_book("M1", "1", today=date(2026, 1, 1))
+    return library

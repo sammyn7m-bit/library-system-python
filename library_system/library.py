@@ -1,7 +1,6 @@
 from datetime import date
 
 from .loans import Loan, fine_for
-
 from .models import (
     Book,
     BookNotFoundError,

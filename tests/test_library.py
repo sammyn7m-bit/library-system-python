@@ -1,6 +1,7 @@
+from datetime import date
+
 import pytest
 
-from datetime import date
 from library_system.library import Library
 from library_system.models import (
     Book,
